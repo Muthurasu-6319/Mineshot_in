@@ -92,7 +92,6 @@ if (!function_exists('getDBConnection')) {
             }
 
             $pdo = new PDO($dsn, $user, $pass, $options);
-            ensureDatabaseSchema($pdo);
             return $pdo;
         } catch (Throwable $e) {
             error_log("Database connection error: " . $e->getMessage());

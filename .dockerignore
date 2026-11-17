@@ -1,0 +1,11 @@
+Portfolio/
+.git/
+.github/
+.vscode/
+.idea/
+.env.example
+*.txt
+*.md
+default.php
+Thumbs.db
+.DS_Store

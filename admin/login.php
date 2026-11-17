@@ -20,9 +20,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $authenticated = false;
 
         if ($pdo) {
-            $stmt = $pdo->prepare("SELECT * FROM admin_users WHERE email = ? LIMIT 1");
-            $stmt->execute([$email]);
-            $user = $stmt->fetch();
+            try {
+                $stmt = $pdo->prepare("SELECT * FROM admin_users WHERE email = ? LIMIT 1");
+                $stmt->execute([$email]);
+                $user = $stmt->fetch();
+            } catch (Throwable $e) {
+                // Table might not exist on initial run, auto-initialize schema
+                ensureDatabaseSchema($pdo);
+                try {
+                    $stmt = $pdo->prepare("SELECT * FROM admin_users WHERE email = ? LIMIT 1");
+                    $stmt->execute([$email]);
+                    $user = $stmt->fetch();
+                } catch (Throwable $retryError) {
+                    $user = false;
+                }
+            }
 
             if ($user && password_verify($password, $user['password_hash'])) {
                 $authenticated = true;

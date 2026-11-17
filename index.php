@@ -1,6 +1,7 @@
 <?php 
 include("header.php");
 require_once __DIR__ . "/config/db.php";
+require_once __DIR__ . "/config/cloudinary.php";
 
 $homePortfolio = [];
 $pdo = getDBConnection();
@@ -237,7 +238,7 @@ if ($pdo) {
                             <div class="col-lg-4 col-md-6 col-12 mb-4">
                                 <div class="wptb-item--inner">
                                     <div class="wptb-item--image">
-                                        <img src="<?= htmlspecialchars($item['image_url']) ?>" alt="<?= htmlspecialchars($item['title'] ?: 'Commercial Photography & Video Production in Chennai - Mineshot') ?>" loading="lazy" decoding="async">
+                                        <img src="<?= htmlspecialchars(optimizeCloudinaryUrl($item['image_url'], 800)) ?>" alt="<?= htmlspecialchars($item['title'] ?: 'Commercial Photography & Video Production in Chennai - Mineshot') ?>" loading="lazy" decoding="async">
                                     </div>
                                 </div>
                             </div>
@@ -598,7 +599,8 @@ if ($pdo) {
 
                 <div class="row" id="enquiry_form">
                     <div class="col-lg-8 offset-lg-2">
-                        <form class="wptb-form">
+                        <div id="enquiryAlert" style="display:none;" class="mb-4"></div>
+                        <form class="wptb-form" id="enquiryContactForm">
                             <div class="wptb-form--inner">
                                 <div class="row">
                                     <div class="col-lg-6 col-md-6 mb-4">
@@ -777,5 +779,52 @@ $(window).on('load', function() {
             });
         });
     }
+});
+
+// Enquiry Form AJAX Submission
+$(document).ready(function() {
+    $('#enquiryContactForm').on('submit', function(e) {
+        e.preventDefault();
+        var $form = $(this);
+        var $btn = $form.find('button[type="submit"]');
+        var $btnText = $btn.find('.text-first');
+        var origText = $btnText.text();
+        var $alert = $('#enquiryAlert');
+
+        $btn.prop('disabled', true);
+        $btnText.text('Sending...');
+        $alert.hide().removeClass('alert alert-success alert-danger');
+
+        $.ajax({
+            url: 'api/contact.php',
+            type: 'POST',
+            data: $form.serialize(),
+            dataType: 'json',
+            success: function(res) {
+                $btn.prop('disabled', false);
+                $btnText.text(origText);
+                if (res.success) {
+                    var html = '<strong>Thank you!</strong> ' + res.message;
+                    if (res.whatsapp_url) {
+                        html += '<div class="mt-2"><a href="' + res.whatsapp_url + '" target="_blank" class="btn btn-sm btn-success text-white" style="background:#25D366;border:none;padding:6px 14px;border-radius:4px;"><i class="bi bi-whatsapp"></i> Chat with us on WhatsApp</a></div>';
+                    }
+                    $alert.addClass('alert alert-success').html(html).fadeIn();
+                    $form[0].reset();
+                } else {
+                    $alert.addClass('alert alert-danger').html('<strong>Error:</strong> ' + (res.error || 'Failed to send message.')).fadeIn();
+                }
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false);
+                $btnText.text(origText);
+                var err = 'Failed to submit enquiry. Please reach out via WhatsApp.';
+                try {
+                    var json = JSON.parse(xhr.responseText);
+                    if (json.error) err = json.error;
+                } catch(e) {}
+                $alert.addClass('alert alert-danger').html('<strong>Error:</strong> ' + err).fadeIn();
+            }
+        });
+    });
 });
 </script>

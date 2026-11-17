@@ -168,3 +168,19 @@ if (!function_exists('deleteFromCloudinary')) {
         ];
     }
 }
+
+if (!function_exists('optimizeCloudinaryUrl')) {
+    /**
+     * Injects auto-format, auto-quality, and responsive width transformations into Cloudinary image URLs
+     */
+    function optimizeCloudinaryUrl($url, $width = 800) {
+        if (empty($url) || strpos($url, 'res.cloudinary.com') === false) {
+            return $url;
+        }
+        if (strpos($url, '/upload/f_auto') !== false) {
+            return $url;
+        }
+        $transformation = "upload/f_auto,q_auto,w_{$width},c_limit/";
+        return str_replace('/upload/', '/' . $transformation, $url);
+    }
+}
