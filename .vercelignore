@@ -4,3 +4,13 @@
 .vscode
 .idea
 demo
+admin
+api
+config
+phpmailer
+Portfolio
+Dockerfile
+Dockerfile.vercel
+Caddyfile
+build_static.php
+*.php
