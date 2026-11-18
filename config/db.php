@@ -68,13 +68,18 @@ if (!function_exists('getDBConnection')) {
                 PDO::ATTR_TIMEOUT => 5
             ];
 
-            // Configure SSL for TiDB Cloud
-            $caPaths = [
+            // Configure SSL for TiDB Cloud (Linux, Docker & Windows/XAMPP)
+            $caLocations = function_exists('openssl_get_cert_locations') ? openssl_get_cert_locations() : [];
+            $caPaths = array_filter([
                 $sslCa,
+                $caLocations['ini_cafile'] ?? null,
+                $caLocations['default_cert_file'] ?? null,
+                'C:/xampp/apache/bin/curl-ca-bundle.crt',
+                'C:/xampp/php/extras/ssl/cacert.pem',
                 '/etc/ssl/certs/ca-certificates.crt',
                 '/etc/pki/tls/certs/ca-bundle.crt',
                 '/etc/ssl/cert.pem'
-            ];
+            ]);
 
             $foundCa = null;
             foreach ($caPaths as $ca) {
